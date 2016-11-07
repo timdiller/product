@@ -153,9 +153,15 @@ class SalesReportModelView(HasTraits):
     def default_traits_view(self):
         return View(
             Group(
-                Item("product_class",
-                     editor=CheckListEditor(name="product_classes")),
-                Item("product", editor=CheckListEditor(name="products")),
+                HGroup(
+                    Item('data_file', show_label=False),
+                    Group(
+                        Item("product_class",
+                             editor=CheckListEditor(name="product_classes")),
+                        Item("product",
+                             editor=CheckListEditor(name="products")),
+                    ),
+                ),
                 Item("sales_records", editor=TableEditor(
                     columns=self.table_columns,
                     ),
