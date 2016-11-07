@@ -2,14 +2,14 @@
 from numpy import arange, array, logical_and, logical_or
 from pandas import DataFrame, read_table
 
-from chaco.api import ArrayPlotData, BarPlot, Plot
+from chaco.api import ArrayPlotData, Plot
 from enable.api import ComponentEditor
 from traits.api import (
     Array, DelegatesTo, Enum, HasTraits, File, Instance, List, Property, Str,
     cached_property, on_trait_change,
 )
 from traitsui.api import (
-    CheckListEditor, Group, HGroup, Item, ListEditor, ObjectColumn,
+    CheckListEditor, Group, HGroup, Item, ObjectColumn,
     TableEditor, View,
 )
 
@@ -71,15 +71,17 @@ class SalesReportModelView(HasTraits):
 
     plot = Instance(Plot)
 
+    agg_period = Enum("daily", "weekly", "monthly")
+    data_file = DelegatesTo('model')
+    metric = Enum(SALE_TOT, PROD_QUANT)
+    num_sales = Property(Array, depends_on='sales')
     product_classes = Property(List, depends_on="model")
     product_class = Str()
     products = Property(List, depends_on='product_class')
     product = Str()
-    agg_period = Enum("daily", "weekly", "monthly")
-    metric = Enum(SALE_TOT, PROD_QUANT)
     revenue = Property(Array, depends_on='sales')
-    num_sales = Property(Array, depends_on='sales')
-    sales = Property(Instance(DataFrame), depends_on=['product_class', 'product'])
+    sales = Property(Instance(DataFrame),
+                     depends_on=['product_class', 'product'])
     sales_records = Property(List, depends_on=['product_class', 'product'])
     table_columns = Property(List, depends_on='model')
 
@@ -113,7 +115,7 @@ class SalesReportModelView(HasTraits):
             return array([])
         else:
             rev = self.sales[PROD_QUANT]
-            revenue_array = rev.resample("W").sum().cumsum()
+            revenue_array = rev.resample("W").sum()
             return revenue_array.values
 
     @cached_property
