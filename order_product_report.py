@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from numpy import arange, array, logical_and, logical_or
 from pandas import DataFrame, read_table
 
@@ -101,7 +103,9 @@ class SalesReportModelView(HasTraits):
     @cached_property
     def _get_revenue(self):
         # TODO add date ranges here
+        logger.debug("Getting revenue")
         if SALE_TOT not in self.sales:
+            logger.debug("{} not found in {}".format(SALE_TOT, self.sales))
             return array([])
         else:
             rev = self.sales[SALE_TOT]
@@ -112,6 +116,7 @@ class SalesReportModelView(HasTraits):
     def _get_num_sales(self):
         # TODO add date ranges here
         if PROD_QUANT not in self.sales:
+            logger.debug("{} not found in {}".format(PROD_QUANT, self.sales))
             return array([])
         else:
             rev = self.sales[PROD_QUANT]
@@ -130,6 +135,7 @@ class SalesReportModelView(HasTraits):
                 self.model.sales_raw[PRODUCT] == self.product
             )
         )
+        logger.debug("Found {} distinct sales records".format(mask.sum()))
         return self.model.sales_raw[mask]
 
     @cached_property
@@ -174,15 +180,32 @@ class SalesReportModelView(HasTraits):
 
     @on_trait_change("product, product_class, metric")
     def update(self):
+        logger.debug("self.metric={!r}".format(self.metric))
+        logger.debug("class={!r}".format(self.product_class))
+        logger.debug("product={!r}".format(self.product))
         if self.metric == SALE_TOT:
             data = self.revenue
+            logger.debug(data)
         elif self.metric == PROD_QUANT:
             data = self.num_sales
         self.plot.data.set_data("metric", data)
         self.plot.data.set_data("date", arange(len(self.revenue)))
+        logger.debug("len(revenue)={}".format(len(self.revenue)))
 
 
 if __name__ == "__main__":
+    fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    if len(logger.handlers) < 2:
+        formatter = logging.Formatter(fmt)
+        file_handler = logging.FileHandler("prod.log")
+        file_handler.setFormatter(formatter)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        logger.addHandler(stream_handler)
+
     from os.path import expanduser, join
     filename = expanduser(join(
         '~',
