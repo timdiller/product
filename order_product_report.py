@@ -78,9 +78,9 @@ class SalesReportModelView(HasTraits):
     metric = Enum(SALE_TOT, PROD_QUANT)
     num_sales = Property(Array, depends_on='sales')
     product_classes = Property(List, depends_on="model")
-    product_class = Str()
+    product_class = Str(ANY)
     products = Property(List, depends_on='product_class')
-    product = Str()
+    product = Str(ANY)
     revenue = Property(Array, depends_on='sales')
     sales = Property(Instance(DataFrame),
                      depends_on=['product_class', 'product'])
