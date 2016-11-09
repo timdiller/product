@@ -43,7 +43,7 @@ def load_data(filename):
         data_frame[column] = to_int(data_frame[column])
     for column in [u'Date placed', u'Subscription expiry date']:
         data_frame[column] = to_datetime(data_frame[column])
-    data_frame.set_index(u"Date placed", inplace=True)
+    data_frame.set_index(u"Date placed", inplace=True, drop=False)
     return data_frame
 
 
