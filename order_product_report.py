@@ -210,7 +210,8 @@ if __name__ == "__main__":
     filename = expanduser(join(
         '~',
         'Downloads',
-        'order-product-report-2015-11-01-to-2016-10-31.csv'
+        'order-product-report-2016-11-01-to-2016-11-08.csv',
+        # 'order-product-report-2015-11-01-to-2016-10-31.csv'
     ))
     data = ProductSalesReport(data_file=filename)
     print data.sales_raw.columns
