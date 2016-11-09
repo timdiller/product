@@ -119,9 +119,9 @@ class SalesReportModelView(HasTraits):
             logger.debug("{} not found in {}".format(PROD_QUANT, self.sales))
             return array([])
         else:
-            rev = self.sales[PROD_QUANT]
-            revenue_array = rev.resample("W").sum()
-            return revenue_array.values
+            num = self.sales[PROD_QUANT]
+            num_sales_array = num.resample("W").sum()
+            return num_sales_array.values
 
     @cached_property
     def _get_sales(self):
