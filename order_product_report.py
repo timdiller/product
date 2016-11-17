@@ -15,6 +15,7 @@ from traitsui.api import (
     TableEditor, View,
 )
 
+AGG_PERIODS = {'Daily': 'D', 'Weekly': 'W', 'Monthly': 'M', 'Yearly': 'A'}
 ANY = u'Any'
 DATE = u'Date placed'
 PROD_CLASS = u'Product class'
@@ -80,17 +81,20 @@ class SalesReportModelView(HasTraits):
 
     plot = Instance(Plot)
 
-    agg_period = Enum("daily", "weekly", "monthly")
+    agg_period = Enum(AGG_PERIODS.keys())
     data_file = DelegatesTo('model')
     metric = Enum(SALE_TOT, PROD_QUANT)
-    num_sales = Property(Array, depends_on='sales')
-    product_classes = Property(List, depends_on="model")
+    num_sales = Property(Array, depends_on=['sales', 'agg_period',
+                                            'model.data_file'])
+    product_classes = Property(List, depends_on="model.product_classes")
     product_class = Str(ANY)
-    products = Property(List, depends_on='product_class')
+    products = Property(List, depends_on=['product_class', 'model.data_file'])
     product = Str(ANY)
-    revenue = Property(Array, depends_on='sales')
+    revenue = Property(Array, depends_on=['sales', 'agg_period',
+                                          'model.data_file'])
     sales = Property(Instance(DataFrame),
-                     depends_on=['product_class', 'product'])
+                     depends_on=['product_class', 'product', 'model.data_file']
+                     )
     sales_records = Property(List, depends_on=['product_class', 'product'])
     table_columns = Property(List, depends_on='model')
 
@@ -116,8 +120,8 @@ class SalesReportModelView(HasTraits):
             return zeros((10,))
         else:
             rev = self.sales[SALE_TOT]
-            revenue_array = rev.resample("D").sum().fillna(0).cumsum()
-            return revenue_array.values
+            resampled_revenue = rev.resample(AGG_PERIODS[self.agg_period])
+            return resampled_revenue.sum().fillna(0).cumsum().values
 
     @cached_property
     def _get_num_sales(self):
@@ -127,8 +131,8 @@ class SalesReportModelView(HasTraits):
             return zeros((10,))
         else:
             num = self.sales[PROD_QUANT]
-            num_sales_array = num.resample("D").sum().fillna(0)
-            return num_sales_array.values
+            resampled_num_sales = num.resample(AGG_PERIODS[self.agg_period])
+            return resampled_num_sales.sum().fillna(0).values
 
     @cached_property
     def _get_sales(self):
@@ -181,15 +185,19 @@ class SalesReportModelView(HasTraits):
                 ),
                 Item("sales_records", editor=TableEditor(
                     columns=self.table_columns,
-                    ),
+                    ), show_label=False,
                 ),
-                Item("metric", show_label=False),
+                HGroup(
+                    Item("metric", show_label=False),
+                    Item("agg_period", show_label=False),
+                ),
                 Item("plot", editor=ComponentEditor(), show_label=False),
             ),
             resizable=True,
         )
 
-    @on_trait_change("product, product_class, metric")
+    @on_trait_change("agg_period, product, product_class, metric, "
+                     "model.data_file")
     def update(self):
         logger.debug("self.metric={!r}".format(self.metric))
         logger.debug("class={!r}".format(self.product_class))
