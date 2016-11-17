@@ -106,10 +106,10 @@ class SalesReportModelView(HasTraits):
         logger.debug("Getting revenue")
         if SALE_TOT not in self.sales:
             logger.debug("{} not found in {}".format(SALE_TOT, self.sales))
-            return array([])
+            return zeros((10,))
         else:
             rev = self.sales[SALE_TOT]
-            revenue_array = rev.resample("W").sum().cumsum()
+            revenue_array = rev.resample("D").sum().fillna(0).cumsum()
             return revenue_array.values
 
     @cached_property
@@ -117,10 +117,10 @@ class SalesReportModelView(HasTraits):
         # TODO add date ranges here
         if PROD_QUANT not in self.sales:
             logger.debug("{} not found in {}".format(PROD_QUANT, self.sales))
-            return array([])
+            return zeros((10,))
         else:
             num = self.sales[PROD_QUANT]
-            num_sales_array = num.resample("W").sum()
+            num_sales_array = num.resample("D").sum().fillna(0)
             return num_sales_array.values
 
     @cached_property
