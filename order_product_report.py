@@ -28,7 +28,6 @@ def nearest_display_max(ary, div=2):
     """
     o_of_m = 10 ** floor(log10(max(ary)))
     mantissa = ceil(1 + div * max(ary) / o_of_m) / div
-    logger.debug((ary, o_of_m, mantissa))
     return o_of_m * mantissa
 
 
@@ -161,7 +160,6 @@ class SalesReportModelView(HasTraits):
         plot_data = ArrayPlotData(date=arange(len(self.revenue)))
         plot_data.set_data(SALE_TOT, self.revenue)
         plot_data.set_data(PROD_QUANT, self.num_sales)
-        logger.debug(plot_data.arrays)
         plot = Plot(plot_data)
         plot.plot(("date", SALE_TOT), type="line", name=SALE_TOT,
                   visible=self.metric == SALE_TOT)
@@ -208,7 +206,6 @@ class SalesReportModelView(HasTraits):
         disp_max = nearest_display_max(self.plot.data.arrays[self.metric])
         self.plot.range2d.set_bounds(('auto', 0.0), ('auto', disp_max))
         logger.debug("len(revenue)={}".format(len(self.revenue)))
-        logger.debug(self.plot.data.arrays)
 
 
 if __name__ == "__main__":
