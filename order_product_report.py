@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from numpy import arange, array, logical_and, logical_or
+from numpy import arange, ceil, floor, log10, logical_and, logical_or, zeros
 from pandas import DataFrame, read_table
 
 from chaco.api import ArrayPlotData, Plot
@@ -20,8 +20,16 @@ DATE = u'Date placed'
 PROD_CLASS = u'Product class'
 PRODUCT = u'Product purchased'
 PROD_QUANT = u'Product quantity'
-SUB_TOT = u'Subtotal (excl. tax)'
 SALE_TOT = u'Total incl Tax'
+
+
+def nearest_display_max(ary, div=2):
+    """Return the next "Round" maximum of the given array
+    """
+    o_of_m = 10 ** floor(log10(max(ary)))
+    mantissa = ceil(1 + div * max(ary) / o_of_m) / div
+    logger.debug((ary, o_of_m, mantissa))
+    return o_of_m * mantissa
 
 
 def load_data(filename):
@@ -150,10 +158,15 @@ class SalesReportModelView(HasTraits):
                 in self.model.sales_raw.columns.drop([PROD_CLASS])]
 
     def _plot_default(self):
-        plot_data = ArrayPlotData(metric=self.revenue,
-                                  date=arange(len(self.revenue)))
+        plot_data = ArrayPlotData(date=arange(len(self.revenue)))
+        plot_data.set_data(SALE_TOT, self.revenue)
+        plot_data.set_data(PROD_QUANT, self.num_sales)
+        logger.debug(plot_data.arrays)
         plot = Plot(plot_data)
-        plot.plot(("date", "metric"), type="bar", bar_width=0.8)
+        plot.plot(("date", SALE_TOT), type="line", name=SALE_TOT,
+                  visible=self.metric == SALE_TOT)
+        plot.plot(("date", PROD_QUANT), type="bar", bar_width=0.8,
+                  name=PROD_QUANT, visible=self.metric == PROD_QUANT)
         return plot
 
     def default_traits_view(self):
@@ -183,14 +196,19 @@ class SalesReportModelView(HasTraits):
         logger.debug("self.metric={!r}".format(self.metric))
         logger.debug("class={!r}".format(self.product_class))
         logger.debug("product={!r}".format(self.product))
-        if self.metric == SALE_TOT:
-            data = self.revenue
-            logger.debug(data)
-        elif self.metric == PROD_QUANT:
-            data = self.num_sales
-        self.plot.data.set_data("metric", data)
+        for name, renderer_list in self.plot.plots.items():
+            renderer = renderer_list[0]
+            visible = name == self.metric
+            renderer.visible = visible
+            logger.debug("Setting visible={} renderer {!r} ".format(visible,
+                                                                    name))
+        self.plot.data.set_data(SALE_TOT, self.revenue)
+        self.plot.data.set_data(PROD_QUANT, self.num_sales)
         self.plot.data.set_data("date", arange(len(self.revenue)))
+        disp_max = nearest_display_max(self.plot.data.arrays[self.metric])
+        self.plot.range2d.set_bounds(('auto', 0.0), ('auto', disp_max))
         logger.debug("len(revenue)={}".format(len(self.revenue)))
+        logger.debug(self.plot.data.arrays)
 
 
 if __name__ == "__main__":
